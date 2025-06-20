@@ -17,9 +17,6 @@ https://github.com/conor-is-my-name/n8n-autoscaling
 
 ## API Endpoints
 
-### POST `/scrape`
-Main scraping endpoint (recommended for production)
-
 **Parameters:**
 - `query` (required): Search query (e.g., "hotels in 98392")
 - `max_places` (optional): Maximum number of results to return
