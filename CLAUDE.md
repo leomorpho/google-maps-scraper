@@ -40,7 +40,7 @@ pip install -r requirements.txt
 uvicorn gmaps_scraper_server.main_api:app --reload
 
 # Run on specific host/port
-uvicorn gmaps_scraper_server.main_api:app --host 0.0.0.0 --port 8001
+uvicorn gmaps_scraper_server.main_api:app --host 0.0.0.0 --port 8000
 ```
 
 ### Docker Development
@@ -112,13 +112,13 @@ Authorization: Bearer your-api-key
 ### Example with Authentication
 ```bash
 # POST request
-curl -X POST "http://localhost:8001/scrape" \
+curl -X POST "http://localhost:8000/scrape" \
 -H "Authorization: Bearer your-api-key" \
 -H "Content-Type: application/json" \
 -d '{"query": "hotels in 98392", "max_places": 10}'
 
 # GET request
-curl "http://localhost:8001/scrape-get?query=hotels%20in%2098392&max_places=10" \
+curl "http://localhost:8000/scrape-get?query=hotels%20in%2098392&max_places=10" \
 -H "Authorization: Bearer your-api-key"
 ```
 

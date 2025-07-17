@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException, Query, Depends, Header
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, List, Dict, Any
 import logging
 import os
@@ -17,9 +16,6 @@ except ImportError:
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# API Key authentication setup
-security = HTTPBearer()
-
 def get_api_keys() -> List[str]:
     """Get valid API keys from environment variable."""
     api_keys_env = os.getenv("API_KEYS", "")
@@ -27,7 +23,7 @@ def get_api_keys() -> List[str]:
         return []
     return [key.strip() for key in api_keys_env.split(",") if key.strip()]
 
-def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def verify_api_key(authorization: Optional[str] = Header(None)):
     """Verify API key from Authorization header."""
     valid_keys = get_api_keys()
     
@@ -36,8 +32,32 @@ def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)
         logging.warning("No API keys configured - allowing unrestricted access")
         return True
     
-    if credentials.credentials not in valid_keys:
-        logging.warning(f"Invalid API key attempted: {credentials.credentials[:10]}...")
+    # If API keys are configured but no authorization header provided
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Extract token from "Bearer <token>" format
+    try:
+        scheme, credentials = authorization.split(" ", 1)
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication scheme",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except ValueError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if credentials not in valid_keys:
+        logging.warning(f"Invalid API key attempted: {credentials[:10]}...")
         raise HTTPException(
             status_code=401,
             detail="Invalid API key",
