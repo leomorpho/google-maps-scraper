@@ -53,6 +53,11 @@ docker-compose build scraper-api
 
 # Run in detached mode
 docker-compose up -d
+
+# Or use Makefile shortcuts:
+make docker-build  # Build and start containers
+make docker-up     # Start containers
+make docker-down   # Stop containers
 ```
 
 ### Network Setup
@@ -61,6 +66,30 @@ The Docker setup uses an external network called `shark`. Create it before runni
 docker network create shark
 ```
 
+## Railway Deployment
+
+### Quick Deploy
+1. Connect your GitHub repository to Railway
+2. Set the following environment variables:
+   - `API_KEYS`: Comma-separated list of valid API keys (e.g., "key1,key2,key3")
+   - `PORT`: Railway will set this automatically
+3. Railway will automatically use `Dockerfile.railway` for deployment
+
+### Manual Deploy
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway link
+railway up
+```
+
+### Environment Variables
+Set these in Railway dashboard:
+- `API_KEYS=your-secret-key-1,your-secret-key-2`
+
 ## API Usage
 
 ### Endpoints
@@ -68,11 +97,30 @@ docker network create shark
 - `POST /scrape`: Main scraping endpoint (JSON body)
 - `GET /scrape-get`: GET version for n8n integration
 
+### Authentication
+All endpoints require Bearer token authentication via the `Authorization` header:
+```bash
+Authorization: Bearer your-api-key
+```
+
 ### Parameters
 - `query` (required): Search query (e.g., "hotels in 98392")
 - `max_places` (optional): Limit number of results
 - `lang` (optional, default "en"): Language code
 - `headless` (optional, default true): Browser mode
+
+### Example with Authentication
+```bash
+# POST request
+curl -X POST "http://localhost:8001/scrape" \
+-H "Authorization: Bearer your-api-key" \
+-H "Content-Type: application/json" \
+-d '{"query": "hotels in 98392", "max_places": 10}'
+
+# GET request
+curl "http://localhost:8001/scrape-get?query=hotels%20in%2098392&max_places=10" \
+-H "Authorization: Bearer your-api-key"
+```
 
 ## Technical Notes
 
@@ -92,3 +140,9 @@ The extractor parses Google Maps' `window.APP_INITIALIZATION_STATE` JavaScript o
 - Graceful degradation for missing data fields
 - Debug file generation for troubleshooting extraction issues
 - Comprehensive logging throughout the scraping process
+
+### Security
+- Bearer token authentication for all scraping endpoints
+- API keys configured via `API_KEYS` environment variable (comma-separated)
+- If no API keys are set, the service allows unrestricted access (development mode)
+- Invalid API key attempts are logged for monitoring
